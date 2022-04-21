@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false,
+    "module": "es6",
+    "target": "es2021",
+    "allowJs": true,
+    "typeRoots": [
+      "node_modules/@types",
+      "types"
+    ],
+    "outDir": "dist/",
+    "jsx": "react",
+    "moduleResolution": "node"
+  }
+}
