@@ -1,54 +1,95 @@
 import React, { useState, useEffect, useRef, useCallback, VFC } from "react";
-import { googleRuns } from "./Utility";
-import { v4 as uuidv4 } from 'uuid';
+import { googleRuns, LoadingAnimation } from "./Utility";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Editor from "@monaco-editor/react";
+import Editor, {loader} from "@monaco-editor/react";
 
 import { MarkdownComponent } from "./MarkdownComponent";
 import { Filer } from "./Files";
 
 type locationHash = {
   uid?: string;
-  edit?: "true";
+  mod?: "read" | "writer";
+  isLoading: boolean;
 }
 
-const markdown = `# My markdown
-- list
-- [ ] checkbox
-## secondary
-\`\`\`javascript
-const text = "hello wolrd";
-console.log(text);
-\`\`\`
-
-\`\`\`html
-<h1>Hello World</h1>
-<div class="container"></div>
-\`\`\`
-
-\`\`\`mermaid
-graph TD
-    A[Christmas] -->|Get money| B(Go shopping)
-    B --> C{Let me think}
-    C -->|One| D[Laptop]
-    C -->|Two| E[iPhone]
-    C -->|Three| F[fa:fa-car Car]
-\`\`\``;
-
-
 export const App = () => {
-  const [location, setLocation] = useState({});
+  const [location, setLocation] = useState<locationHash>({ isLoading: true });
   useEffect(() => {
-    google.script.url.getLocation((loc) => setLocation(loc.parameter));
+    google.script.url.getLocation((loc) => setLocation({ ...loc.parameter, isLoading: false }));
   }, []);
   useEffect(() => {
     console.log(location);
   }, [location]);
 
+  return (
+    <section className="">
+      {
+        location.isLoading && <LoadingAnimation />
+      }
+      {
+        !location.isLoading && location.mod === "read" && <ReadOnlyView location={location} />
+      }
+      {
+        !location.isLoading && location.mod === "writer" && <EditerView />
+      }
+      {
+        !location.isLoading && location.mod === undefined && (
+          <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
+            正しいURLを入力してください
+          </div>
+        )
+      }
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </section>
+  )
+}
+
+const ReadOnlyView = ({ location }) => {
+  const [isLoading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  useEffect(() => {
+    const { uid } = location
+    googleRuns("getMarkdownText", { uid })
+      .then(res => setText(res.value))
+      .catch(err => toast.error(`情報取得に失敗しました\n${err}`))
+      .finally(setLoading(false))
+  }, []);
+  return (
+    <>
+      {
+        isLoading
+          ? <LoadingAnimation />
+          : (
+            <section className="flex justify-center bg-slate-200">
+              <div className="w-[50rem] min-h-screen overflow-y-auto m-auto border-x border-blue-500 p-8 bg-white">
+                <MarkdownComponent text={text} />
+              </div>
+            </section>
+          )
+      }
+    </>
+  )
+}
+
+const EditerView = () => {
   const [files, setFiles] = useState([]);
-  const [activeFileState, setActiveFileState] = useState(null);
+  const [activeFileState, setActiveFileState] = useState<any>(null);
   const activeFile = useRef<{ uid?: string, text?: string, name?: string }>({});
+
+  useEffect(() => {
+    loader.init().then(monaco => console.log("here is the monaco instance:", monaco));
+  }, []);
 
   useEffect(() => {
     console.log("file,state,current");
@@ -62,7 +103,7 @@ export const App = () => {
 
   }, [activeFileState]);
 
-  const [text, setText] = useState(markdown);
+  const [text, setText] = useState<string>("");
   useEffect(() => {
     if (activeFileState !== null)
       activeFile.current.text = text;
@@ -108,8 +149,6 @@ export const App = () => {
   const mountEvent = (editor, monaco) => {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, saveEvent);
   };
-
-
   return (
     <section className="flex">
       <aside className="shrink-0">
@@ -121,7 +160,7 @@ export const App = () => {
             {files.map((file, index) => {
               const isActiveStyle = index === activeFileState ? " text-blue-600 bg-gray-100 " : " text-gray-600 hover:text-gray-800 hover:bg-gray-50";
               return (
-                <li className="mr-2">
+                <li className="mr-2" key={`${index}`}>
                   <button className={"inline-flex items-center p-2 rounded-t-lg border-transparent group " + isActiveStyle} onClick={() => setActiveFileState(index)}>
                     <span>{file.name}</span>
                     <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" onClick={(e) => hiddenFile(e, index)}>
@@ -132,9 +171,6 @@ export const App = () => {
               )
             })}
           </ul>
-          {files.map(file => {
-            return <>{file.name}</>
-          })}
         </div>
         <div className="w-full h-[93vh] flex">
           {
@@ -150,23 +186,12 @@ export const App = () => {
                   onMount={mountEvent}
                 />
               </div>
-              <div className="w-1/2">
+              <div className="w-1/2 overflow-y-auto">
                 <MarkdownComponent text={text} />
               </div>
             </>
           }
         </div>
-        <ToastContainer
-          position="bottom-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
       </section>
     </section>
   )
