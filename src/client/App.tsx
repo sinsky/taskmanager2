@@ -154,7 +154,7 @@ const EditerView = () => {
       <aside className="shrink-0">
         <Filer files={files} setFiles={setFiles} setActiveFileState={setActiveFileState} />
       </aside>
-      <section className="w-full p-4">
+      <section className="w-full p-4 pb-0">
         <div className="h-10">
           <ul className="flex items-center flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400">
             {files.map((file, index) => {
@@ -172,7 +172,7 @@ const EditerView = () => {
             })}
           </ul>
         </div>
-        <div className="w-full h-[93vh] flex">
+        <div className="w-full h-[92vh] flex">
           {
             activeFileState !== null &&
             <>

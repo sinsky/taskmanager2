@@ -72,8 +72,8 @@ export const Filer = ({ files, setFiles, setActiveFileState }) => {
       .finally(() => closeModal());
   };
   return (
-    <section className="w-[20rem]">
-      <div className="p-4 h-screen text-md">
+    <section className="w-[20rem] overflow-y-auto">
+      <div className="p-4 pr-0 h-screen text-md">
         {isLoading ? (
           <div className="flex justify-center">
             <svg role="status" className="inline mr-2 w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-red-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
