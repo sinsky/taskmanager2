@@ -147,7 +147,7 @@ const EditerView = () => {
       });
   };
   const mountEvent = (editor, monaco) => {
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, saveEvent);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, saveEvent);
   };
   return (
     <section className="flex">
